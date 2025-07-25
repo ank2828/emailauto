@@ -16,20 +16,16 @@ export async function POST(request: NextRequest) {
     // Your production n8n webhook URL
     const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || 'https://thunderbird-labs.app.n8n.cloud/webhook/a1689cc2-ecbd-4367-880f-b6d7083e93d0'
     
-    // Call your n8n webhook
+    // Call your n8n webhook with GET request (since it's a GET webhook)
     const response = await fetch(N8N_WEBHOOK_URL, {
-      method: 'POST',
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
         // Add any authentication headers your n8n webhook needs
         ...(process.env.N8N_WEBHOOK_SECRET && {
           'Authorization': `Bearer ${process.env.N8N_WEBHOOK_SECRET}`
         })
-      },
-      body: JSON.stringify({
-        action: 'summarize_latest_emails',
-        timestamp: new Date().toISOString()
-      })
+      }
     })
     
     if (!response.ok) {
