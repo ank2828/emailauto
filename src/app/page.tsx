@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Mail, Sparkles, RefreshCw, Clock, ExternalLink, Inbox } from 'lucide-react'
+import { Mail, Sparkles, RefreshCw, Clock, ExternalLink, Inbox, Grid3X3, List } from 'lucide-react'
 
 interface EmailSummary {
   id: string
@@ -15,11 +15,14 @@ interface EmailSummary {
   url?: string
 }
 
+type ViewType = 'grid' | 'list'
+
 export default function EmailHub() {
   const [emailSummaries, setEmailSummaries] = useState<EmailSummary[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
+  const [viewType, setViewType] = useState<ViewType>('grid')
 
   const handleSummarizeEmails = async () => {
     setIsLoading(true)
@@ -40,7 +43,16 @@ export default function EmailHub() {
       }
       
       const data = await response.json()
-      setEmailSummaries(data.summaries || [])
+      const summaries = data.summaries || []
+      
+      // Sort emails by timestamp (most recent first)
+      const sortedSummaries = summaries.sort((a: EmailSummary, b: EmailSummary) => {
+        const dateA = new Date(a.timestamp)
+        const dateB = new Date(b.timestamp)
+        return dateB.getTime() - dateA.getTime()
+      })
+      
+      setEmailSummaries(sortedSummaries)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -125,58 +137,139 @@ export default function EmailHub() {
               <h2 className="text-2xl font-semibold text-gray-800 mb-2">
                 Your Email Summaries
               </h2>
-              <p className="text-gray-600">
+              <p className="text-gray-600 mb-4">
                 {emailSummaries.length} {emailSummaries.length === 1 ? 'email' : 'emails'} summarized
               </p>
+              
+              {/* View Toggle */}
+              <div className="flex justify-center items-center gap-2">
+                <Button
+                  variant={viewType === 'grid' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewType('grid')}
+                  className="flex items-center gap-2"
+                >
+                  <Grid3X3 className="h-4 w-4" />
+                  Grid
+                </Button>
+                <Button
+                  variant={viewType === 'list' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewType('list')}
+                  className="flex items-center gap-2"
+                >
+                  <List className="h-4 w-4" />
+                  List
+                </Button>
+              </div>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {emailSummaries.map((email, index) => (
-                <motion.div
-                  key={email.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1, duration: 0.4 }}
-                  whileHover={{ scale: 1.02 }}
-                >
-                  <Card className="h-full bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="text-lg font-semibold text-gray-900 line-clamp-2 flex-1">
-                          {email.subject}
-                        </CardTitle>
-                        {email.url && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => window.open(email.url, '_blank')}
-                            className="flex-shrink-0 h-8 w-8"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
+            {/* Grid View */}
+            {viewType === 'grid' && (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {emailSummaries.map((email, index) => (
+                  <motion.div
+                    key={email.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1, duration: 0.4 }}
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <Card className="h-full bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <CardTitle className="text-lg font-semibold text-gray-900 line-clamp-2 flex-1">
+                            {email.subject}
+                          </CardTitle>
+                          {email.url && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => window.open(email.url, '_blank')}
+                              className="flex-shrink-0 h-8 w-8"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                        
+                        <CardDescription className="flex items-center gap-2 text-sm">
+                          <Mail className="h-4 w-4 text-blue-500" />
+                          <span className="font-medium">{email.sender}</span>
+                        </CardDescription>
+                        
+                        <CardDescription className="flex items-center gap-2 text-xs text-gray-500">
+                          <Clock className="h-3 w-3" />
+                          {email.timestamp}
+                        </CardDescription>
+                      </CardHeader>
                       
-                      <CardDescription className="flex items-center gap-2 text-sm">
-                        <Mail className="h-4 w-4 text-blue-500" />
-                        <span className="font-medium">{email.sender}</span>
-                      </CardDescription>
-                      
-                      <CardDescription className="flex items-center gap-2 text-xs text-gray-500">
-                        <Clock className="h-3 w-3" />
-                        {email.timestamp}
-                      </CardDescription>
-                    </CardHeader>
-                    
-                    <CardContent>
-                      <p className="text-sm text-gray-700 leading-relaxed line-clamp-4">
-                        {email.summary}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
+                      <CardContent>
+                        <p className="text-sm text-gray-700 leading-relaxed line-clamp-4">
+                          {email.summary}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+
+            {/* List View */}
+            {viewType === 'list' && (
+              <div className="space-y-4">
+                {emailSummaries.map((email, index) => (
+                  <motion.div
+                    key={email.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05, duration: 0.3 }}
+                  >
+                    <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                      <CardContent className="p-6">
+                        <div className="flex items-start gap-4">
+                          <div className="flex-shrink-0 mt-1">
+                            <Mail className="h-5 w-5 text-blue-500" />
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-4 mb-2">
+                              <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">
+                                {email.subject}
+                              </h3>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <span className="text-xs text-gray-500 flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {email.timestamp}
+                                </span>
+                                {email.url && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => window.open(email.url, '_blank')}
+                                    className="h-8 w-8"
+                                  >
+                                    <ExternalLink className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <p className="text-sm font-medium text-gray-600 mb-2">
+                              From: {email.sender}
+                            </p>
+                            
+                            <p className="text-sm text-gray-700 leading-relaxed line-clamp-3">
+                              {email.summary}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            )}
           </motion.div>
         )}
 
