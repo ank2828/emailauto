@@ -39,6 +39,17 @@ export async function POST(request: NextRequest) {
     const data = await response.json()
     console.log('📦 Raw webhook response:', JSON.stringify(data, null, 2))
     
+    // DEBUG: Check for various nested structures
+    console.log('🔍 Debugging response structure:')
+    console.log('- Is array?', Array.isArray(data))
+    console.log('- Has summaries?', data.summaries ? 'YES' : 'NO')
+    console.log('- Has emails?', data.emails ? 'YES' : 'NO')
+    console.log('- Has data?', data.data ? 'YES' : 'NO')
+    console.log('- Has items?', data.items ? 'YES' : 'NO')
+    console.log('- Has results?', data.results ? 'YES' : 'NO')
+    console.log('- Has messages?', data.messages ? 'YES' : 'NO')
+    console.log('- All keys:', Object.keys(data))
+    
     // Transform the n8n response to match our expected format
     let transformedData: EmailSummaryResponse
     
@@ -81,9 +92,62 @@ export async function POST(request: NextRequest) {
           url: item.url || item.link || item.emailUrl
         }))
       }
+    } else if (data.data && Array.isArray(data.data)) {
+      // If response has a 'data' property
+      console.log('📧 Processing data array')
+      transformedData = {
+        summaries: data.data.map((item: any, index: number) => ({
+          id: item.id || item.messageId || `email-${index}-${Date.now()}`,
+          subject: item.subject || item.title || item.Subject || 'No Subject',
+          sender: item.sender || item.from || item.From || item.fromEmail || 'Unknown Sender',
+          summary: item.summary || item.content || item.body || item.Summary || item.emailSummary || 'No summary available',
+          timestamp: item.timestamp || item.date || item.time || item.receivedDate || new Date().toLocaleDateString(),
+          url: item.url || item.link || item.emailUrl
+        }))
+      }
+    } else if (data.items && Array.isArray(data.items)) {
+      // If response has an 'items' property
+      console.log('📧 Processing items array')
+      transformedData = {
+        summaries: data.items.map((item: any, index: number) => ({
+          id: item.id || item.messageId || `email-${index}-${Date.now()}`,
+          subject: item.subject || item.title || item.Subject || 'No Subject',
+          sender: item.sender || item.from || item.From || item.fromEmail || 'Unknown Sender',
+          summary: item.summary || item.content || item.body || item.Summary || item.emailSummary || 'No summary available',
+          timestamp: item.timestamp || item.date || item.time || item.receivedDate || new Date().toLocaleDateString(),
+          url: item.url || item.link || item.emailUrl
+        }))
+      }
+    } else if (data.results && Array.isArray(data.results)) {
+      // If response has a 'results' property
+      console.log('📧 Processing results array')
+      transformedData = {
+        summaries: data.results.map((item: any, index: number) => ({
+          id: item.id || item.messageId || `email-${index}-${Date.now()}`,
+          subject: item.subject || item.title || item.Subject || 'No Subject',
+          sender: item.sender || item.from || item.From || item.fromEmail || 'Unknown Sender',
+          summary: item.summary || item.content || item.body || item.Summary || item.emailSummary || 'No summary available',
+          timestamp: item.timestamp || item.date || item.time || item.receivedDate || new Date().toLocaleDateString(),
+          url: item.url || item.link || item.emailUrl
+        }))
+      }
+    } else if (data.messages && Array.isArray(data.messages)) {
+      // If response has a 'messages' property
+      console.log('📧 Processing messages array')
+      transformedData = {
+        summaries: data.messages.map((item: any, index: number) => ({
+          id: item.id || item.messageId || `email-${index}-${Date.now()}`,
+          subject: item.subject || item.title || item.Subject || 'No Subject',
+          sender: item.sender || item.from || item.From || item.fromEmail || 'Unknown Sender',
+          summary: item.summary || item.content || item.body || item.Summary || item.emailSummary || 'No summary available',
+          timestamp: item.timestamp || item.date || item.time || item.receivedDate || new Date().toLocaleDateString(),
+          url: item.url || item.link || item.emailUrl
+        }))
+      }
     } else {
       // If it's a single email object, wrap it in an array
       console.log('📧 Processing single email object')
+      console.log('⚠️  WARNING: Only found 1 email! Check your n8n workflow configuration.')
       transformedData = {
         summaries: [{
           id: data.id || data.messageId || `email-single-${Date.now()}`,
