@@ -36,8 +36,25 @@ export async function POST(request: NextRequest) {
       throw new Error(`n8n webhook responded with status: ${response.status}`)
     }
     
-    const data = await response.json()
-    console.log('📦 Raw webhook response:', JSON.stringify(data, null, 2))
+    // Handle empty responses
+    const responseText = await response.text()
+    console.log('📦 Raw webhook response text:', responseText)
+    
+    if (!responseText || responseText.trim() === '') {
+      console.log('📭 Empty response from webhook - no emails to summarize')
+      return NextResponse.json({ summaries: [] })
+    }
+    
+    let data
+    try {
+      data = JSON.parse(responseText)
+    } catch (parseError) {
+      console.log('❌ JSON parse error:', parseError)
+      console.log('📭 Invalid JSON response - treating as no emails to summarize')
+      return NextResponse.json({ summaries: [] })
+    }
+    
+    console.log('📦 Parsed webhook response:', JSON.stringify(data, null, 2))
     
     // DEBUG: Check for various nested structures
     console.log('🔍 Debugging response structure:')
@@ -55,6 +72,10 @@ export async function POST(request: NextRequest) {
     
     if (Array.isArray(data)) {
       // If response is directly an array of emails
+      if (data.length === 0) {
+        console.log('📭 Empty array - no emails to summarize')
+        return NextResponse.json({ summaries: [] })
+      }
       console.log('📧 Processing array of emails')
       transformedData = {
         summaries: data.map((item: any, index: number) => ({
@@ -68,6 +89,10 @@ export async function POST(request: NextRequest) {
       }
     } else if (data.summaries && Array.isArray(data.summaries)) {
       // If response has a 'summaries' property
+      if (data.summaries.length === 0) {
+        console.log('📭 Empty summaries array - no emails to summarize')
+        return NextResponse.json({ summaries: [] })
+      }
       console.log('📧 Processing summaries array')
       transformedData = {
         summaries: data.summaries.map((item: any, index: number) => ({
@@ -81,6 +106,10 @@ export async function POST(request: NextRequest) {
       }
     } else if (data.emails && Array.isArray(data.emails)) {
       // If response has an 'emails' property
+      if (data.emails.length === 0) {
+        console.log('📭 Empty emails array - no emails to summarize')
+        return NextResponse.json({ summaries: [] })
+      }
       console.log('📧 Processing emails array')
       transformedData = {
         summaries: data.emails.map((item: any, index: number) => ({
@@ -94,6 +123,10 @@ export async function POST(request: NextRequest) {
       }
     } else if (data.data && Array.isArray(data.data)) {
       // If response has a 'data' property
+      if (data.data.length === 0) {
+        console.log('📭 Empty data array - no emails to summarize')
+        return NextResponse.json({ summaries: [] })
+      }
       console.log('📧 Processing data array')
       transformedData = {
         summaries: data.data.map((item: any, index: number) => ({
@@ -107,6 +140,10 @@ export async function POST(request: NextRequest) {
       }
     } else if (data.items && Array.isArray(data.items)) {
       // If response has an 'items' property
+      if (data.items.length === 0) {
+        console.log('📭 Empty items array - no emails to summarize')
+        return NextResponse.json({ summaries: [] })
+      }
       console.log('📧 Processing items array')
       transformedData = {
         summaries: data.items.map((item: any, index: number) => ({
@@ -120,6 +157,10 @@ export async function POST(request: NextRequest) {
       }
     } else if (data.results && Array.isArray(data.results)) {
       // If response has a 'results' property
+      if (data.results.length === 0) {
+        console.log('📭 Empty results array - no emails to summarize')
+        return NextResponse.json({ summaries: [] })
+      }
       console.log('📧 Processing results array')
       transformedData = {
         summaries: data.results.map((item: any, index: number) => ({
@@ -133,6 +174,10 @@ export async function POST(request: NextRequest) {
       }
     } else if (data.messages && Array.isArray(data.messages)) {
       // If response has a 'messages' property
+      if (data.messages.length === 0) {
+        console.log('📭 Empty messages array - no emails to summarize')
+        return NextResponse.json({ summaries: [] })
+      }
       console.log('📧 Processing messages array')
       transformedData = {
         summaries: data.messages.map((item: any, index: number) => ({
@@ -144,10 +189,9 @@ export async function POST(request: NextRequest) {
           url: item.url || item.link || item.emailUrl
         }))
       }
-    } else {
+    } else if (data && typeof data === 'object' && data.from && data.subject) {
       // If it's a single email object, wrap it in an array
       console.log('📧 Processing single email object')
-      console.log('⚠️  WARNING: Only found 1 email! Check your n8n workflow configuration.')
       transformedData = {
         summaries: [{
           id: data.id || data.messageId || `email-single-${Date.now()}`,
@@ -158,6 +202,10 @@ export async function POST(request: NextRequest) {
           url: data.url || data.link || data.emailUrl
         }]
       }
+    } else {
+      // If we can't recognize the format, assume no emails
+      console.log('📭 Unrecognized response format - treating as no emails to summarize')
+      return NextResponse.json({ summaries: [] })
     }
     
     console.log('✅ Transformed data:', JSON.stringify(transformedData, null, 2))
@@ -168,37 +216,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('❌ Error calling n8n webhook:', error)
     
-    // Return mock data for development/testing
-    const mockData: EmailSummaryResponse = {
-      summaries: [
-        {
-          id: 'mock-1',
-          subject: 'Important Meeting Tomorrow',
-          sender: 'john@company.com',
-          summary: 'Team meeting scheduled for 2 PM tomorrow to discuss Q4 planning. Please prepare your department updates and budget proposals.',
-          timestamp: '2 hours ago',
-          url: 'https://mail.google.com/mail/u/0/#inbox/123'
-        },
-        {
-          id: 'mock-2',
-          subject: 'Project Update - API Integration',
-          sender: 'sarah@dev-team.com',
-          summary: 'The new API integration is complete and ready for testing. All endpoints are documented and the staging environment is live.',
-          timestamp: '4 hours ago'
-        },
-        {
-          id: 'mock-3',
-          subject: 'Invoice #2024-001 Due',
-          sender: 'billing@service.com',
-          summary: 'Monthly subscription invoice is due in 3 days. Auto-payment is set up but please verify your payment method is current.',
-          timestamp: '1 day ago',
-          url: 'https://billing.service.com/invoice/2024-001'
-        }
-      ]
-    }
-    
-    console.log('🔄 Returning mock data due to error')
-    return NextResponse.json(mockData)
+    // Return empty array instead of mock data
+    console.log('📭 Returning empty array due to error')
+    return NextResponse.json({ summaries: [] })
   }
 }
 

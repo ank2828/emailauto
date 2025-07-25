@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Mail, Sparkles, RefreshCw, Clock, ExternalLink } from 'lucide-react'
+import { Mail, Sparkles, RefreshCw, Clock, ExternalLink, Inbox } from 'lucide-react'
 
 interface EmailSummary {
   id: string
@@ -19,10 +19,12 @@ export default function EmailHub() {
   const [emailSummaries, setEmailSummaries] = useState<EmailSummary[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [hasSearched, setHasSearched] = useState(false)
 
   const handleSummarizeEmails = async () => {
     setIsLoading(true)
     setError(null)
+    setHasSearched(true)
     
     try {
       // Call your n8n webhook - replace with your actual webhook URL
@@ -178,7 +180,7 @@ export default function EmailHub() {
           </motion.div>
         )}
 
-        {/* Empty State */}
+        {/* Empty States */}
         {emailSummaries.length === 0 && !isLoading && !error && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -186,10 +188,26 @@ export default function EmailHub() {
             transition={{ delay: 0.4 }}
             className="text-center py-12"
           >
-            <Mail className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg">
-              Click the button above to get started with your email summaries!
-            </p>
+            {hasSearched ? (
+              // Show "nothing to summarize" when we've searched but found no emails
+              <>
+                <Inbox className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-lg font-medium mb-2 text-gray-700">
+                  Nothing to summarize
+                </p>
+                <p className="text-gray-500">
+                  No recent emails found that need summarizing. Your inbox is all caught up! 🎉
+                </p>
+              </>
+            ) : (
+              // Show initial state when haven't searched yet
+              <>
+                <Mail className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg">
+                  Click the button above to get started with your email summaries!
+                </p>
+              </>
+            )}
           </motion.div>
         )}
       </div>
