@@ -13,8 +13,8 @@ interface EmailSummaryResponse {
 
 export async function POST(request: NextRequest) {
   try {
-    // Replace this URL with your actual n8n webhook URL
-    const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || 'https://your-n8n-instance.com/webhook/email-summary'
+    // Your production n8n webhook URL
+    const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || 'https://thunderbird-labs.app.n8n.cloud/webhook/a1689cc2-ecbd-4367-880f-b6d7083e93d0'
     
     // Call your n8n webhook
     const response = await fetch(N8N_WEBHOOK_URL, {
