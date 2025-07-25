@@ -17,6 +17,38 @@ interface EmailSummary {
 
 type ViewType = 'grid' | 'list'
 
+// Utility function to format timestamp for display
+const formatTimestamp = (timestamp: string): string => {
+  try {
+    const date = new Date(timestamp)
+    
+    // Get ordinal suffix for day
+    const getOrdinalSuffix = (day: number): string => {
+      if (day > 3 && day < 21) return 'th'
+      switch (day % 10) {
+        case 1: return 'st'
+        case 2: return 'nd'
+        case 3: return 'rd'
+        default: return 'th'
+      }
+    }
+    
+    const month = date.toLocaleDateString('en-US', { month: 'long' })
+    const day = date.getDate()
+    const year = date.getFullYear()
+    const time = date.toLocaleDateString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    }).split(', ')[1] // Extract just the time part
+    
+    return `${month} ${day}${getOrdinalSuffix(day)}, ${year} at ${time}`
+  } catch (error) {
+    console.error('Error formatting timestamp:', error)
+    return timestamp // Fallback to original if formatting fails
+  }
+}
+
 export default function EmailHub() {
   const [emailSummaries, setEmailSummaries] = useState<EmailSummary[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -216,7 +248,7 @@ export default function EmailHub() {
                         
                         <CardDescription className="flex items-center gap-2 text-xs text-gray-500">
                           <Clock className="h-3 w-3" />
-                          {email.timestamp}
+                          {formatTimestamp(email.timestamp)}
                         </CardDescription>
                       </CardHeader>
                       
@@ -256,7 +288,7 @@ export default function EmailHub() {
                               <div className="flex items-center gap-2 flex-shrink-0">
                                 <span className="text-xs text-gray-500 flex items-center gap-1">
                                   <Clock className="h-3 w-3" />
-                                  {email.timestamp}
+                                  {formatTimestamp(email.timestamp)}
                                 </span>
                                 {email.url && (
                                   <Button
