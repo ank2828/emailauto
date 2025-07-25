@@ -11,9 +11,20 @@ interface EmailSummaryResponse {
   }[]
 }
 
-// Helper function to create proper timestamp
+// Helper function to create proper timestamp - prioritize Supabase created_at
 const getTimestamp = (item: any) => {
-  return item.timestamp || item.date || item.time || item.receivedDate || new Date().toISOString()
+  // Prioritize Supabase created_at field and common email timestamp fields
+  return item.created_at || 
+         item.createdAt || 
+         item.timestamp || 
+         item.date || 
+         item.time || 
+         item.receivedDate || 
+         item.sent_at ||
+         item.sentAt ||
+         item.email_date ||
+         item.emailDate ||
+         new Date().toISOString()
 }
 
 export async function POST(request: NextRequest) {
