@@ -1,0 +1,10 @@
+node_modules
+.next
+.env*
+*.md
+*.json
+*.lock
+dist
+build
+coverage
+*.log 
