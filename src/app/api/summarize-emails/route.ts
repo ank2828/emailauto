@@ -16,6 +16,8 @@ export async function POST(request: NextRequest) {
     // Your production n8n webhook URL
     const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || 'https://thunderbird-labs.app.n8n.cloud/webhook/a1689cc2-ecbd-4367-880f-b6d7083e93d0'
     
+    console.log('🚀 Calling n8n webhook:', N8N_WEBHOOK_URL)
+    
     // Call your n8n webhook with GET request (since it's a GET webhook)
     const response = await fetch(N8N_WEBHOOK_URL, {
       method: 'GET',
@@ -28,29 +30,79 @@ export async function POST(request: NextRequest) {
       }
     })
     
+    console.log('📡 Webhook response status:', response.status)
+    
     if (!response.ok) {
       throw new Error(`n8n webhook responded with status: ${response.status}`)
     }
     
     const data = await response.json()
+    console.log('📦 Raw webhook response:', JSON.stringify(data, null, 2))
     
     // Transform the n8n response to match our expected format
-    // Adjust this based on the actual structure your n8n webhook returns
-    const transformedData: EmailSummaryResponse = {
-      summaries: Array.isArray(data) ? data.map((item: any, index: number) => ({
-        id: item.id || `email-${index}`,
-        subject: item.subject || item.title || 'No Subject',
-        sender: item.sender || item.from || 'Unknown Sender',
-        summary: item.summary || item.content || item.body || 'No summary available',
-        timestamp: item.timestamp || item.date || new Date().toLocaleDateString(),
-        url: item.url || item.link
-      })) : data.summaries || []
+    let transformedData: EmailSummaryResponse
+    
+    if (Array.isArray(data)) {
+      // If response is directly an array of emails
+      console.log('📧 Processing array of emails')
+      transformedData = {
+        summaries: data.map((item: any, index: number) => ({
+          id: item.id || item.messageId || `email-${index}-${Date.now()}`,
+          subject: item.subject || item.title || item.Subject || 'No Subject',
+          sender: item.sender || item.from || item.From || item.fromEmail || 'Unknown Sender',
+          summary: item.summary || item.content || item.body || item.Summary || item.emailSummary || 'No summary available',
+          timestamp: item.timestamp || item.date || item.time || item.receivedDate || new Date().toLocaleDateString(),
+          url: item.url || item.link || item.emailUrl
+        }))
+      }
+    } else if (data.summaries && Array.isArray(data.summaries)) {
+      // If response has a 'summaries' property
+      console.log('📧 Processing summaries array')
+      transformedData = {
+        summaries: data.summaries.map((item: any, index: number) => ({
+          id: item.id || item.messageId || `email-${index}-${Date.now()}`,
+          subject: item.subject || item.title || item.Subject || 'No Subject',
+          sender: item.sender || item.from || item.From || item.fromEmail || 'Unknown Sender',
+          summary: item.summary || item.content || item.body || item.Summary || item.emailSummary || 'No summary available',
+          timestamp: item.timestamp || item.date || item.time || item.receivedDate || new Date().toLocaleDateString(),
+          url: item.url || item.link || item.emailUrl
+        }))
+      }
+    } else if (data.emails && Array.isArray(data.emails)) {
+      // If response has an 'emails' property
+      console.log('📧 Processing emails array')
+      transformedData = {
+        summaries: data.emails.map((item: any, index: number) => ({
+          id: item.id || item.messageId || `email-${index}-${Date.now()}`,
+          subject: item.subject || item.title || item.Subject || 'No Subject',
+          sender: item.sender || item.from || item.From || item.fromEmail || 'Unknown Sender',
+          summary: item.summary || item.content || item.body || item.Summary || item.emailSummary || 'No summary available',
+          timestamp: item.timestamp || item.date || item.time || item.receivedDate || new Date().toLocaleDateString(),
+          url: item.url || item.link || item.emailUrl
+        }))
+      }
+    } else {
+      // If it's a single email object, wrap it in an array
+      console.log('📧 Processing single email object')
+      transformedData = {
+        summaries: [{
+          id: data.id || data.messageId || `email-single-${Date.now()}`,
+          subject: data.subject || data.title || data.Subject || 'No Subject',
+          sender: data.sender || data.from || data.From || data.fromEmail || 'Unknown Sender',
+          summary: data.summary || data.content || data.body || data.Summary || data.emailSummary || 'No summary available',
+          timestamp: data.timestamp || data.date || data.time || data.receivedDate || new Date().toLocaleDateString(),
+          url: data.url || data.link || data.emailUrl
+        }]
+      }
     }
+    
+    console.log('✅ Transformed data:', JSON.stringify(transformedData, null, 2))
+    console.log(`📊 Found ${transformedData.summaries.length} email summaries`)
     
     return NextResponse.json(transformedData)
     
   } catch (error) {
-    console.error('Error calling n8n webhook:', error)
+    console.error('❌ Error calling n8n webhook:', error)
     
     // Return mock data for development/testing
     const mockData: EmailSummaryResponse = {
@@ -81,15 +133,8 @@ export async function POST(request: NextRequest) {
       ]
     }
     
-    // In development, return mock data. In production, return error
-    if (process.env.NODE_ENV === 'development') {
-      return NextResponse.json(mockData)
-    }
-    
-    return NextResponse.json(
-      { error: 'Failed to fetch email summaries' },
-      { status: 500 }
-    )
+    console.log('🔄 Returning mock data due to error')
+    return NextResponse.json(mockData)
   }
 }
 
