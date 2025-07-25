@@ -1,28 +1,12 @@
-export interface Summary {
+export interface EmailSummary {
   id: string
-  title: string
-  url: string
-  summaryText: string
-  createdAt: Date
-  updatedAt: Date
-  userId?: string | null
+  subject: string
+  sender: string
+  summary: string
+  timestamp: string
+  url?: string
 }
 
-export interface CreateSummaryRequest {
-  title: string
-  url: string
-  summaryText: string
-}
-
-export interface WebhookPayload {
-  title: string
-  url: string
-  summaryText: string
-  secret: string
-}
-
-export interface SummaryFilters {
-  startDate?: Date
-  endDate?: Date
-  search?: string
+export interface EmailSummaryResponse {
+  summaries: EmailSummary[]
 } 

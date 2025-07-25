@@ -5,9 +5,9 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'EmailAuto - Summary Dashboard',
-  description: 'A modern dashboard for managing and viewing content summaries',
-  keywords: ['summaries', 'dashboard', 'content', 'automation'],
+  title: 'Personal Email Hub - AI-Powered Email Summaries',
+  description: 'Transform your inbox chaos into clear, actionable insights with AI-powered email summaries',
+  keywords: ['email', 'summaries', 'AI', 'productivity', 'automation'],
   authors: [{ name: 'EmailAuto' }],
   viewport: 'width=device-width, initial-scale=1',
 }
