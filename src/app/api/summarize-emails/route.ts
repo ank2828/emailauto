@@ -11,6 +11,11 @@ interface EmailSummaryResponse {
   }[]
 }
 
+// Helper function to create proper timestamp
+const getTimestamp = (item: any) => {
+  return item.timestamp || item.date || item.time || item.receivedDate || new Date().toISOString()
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Your production n8n webhook URL
@@ -35,7 +40,7 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       throw new Error(`n8n webhook responded with status: ${response.status}`)
     }
-    
+
     // Handle empty responses
     const responseText = await response.text()
     console.log('📦 Raw webhook response text:', responseText)
@@ -83,7 +88,7 @@ export async function POST(request: NextRequest) {
           subject: item.subject || item.title || item.Subject || 'No Subject',
           sender: item.sender || item.from || item.From || item.fromEmail || 'Unknown Sender',
           summary: item.summary || item.content || item.body || item.Summary || item.emailSummary || 'No summary available',
-          timestamp: item.timestamp || item.date || item.time || item.receivedDate || new Date().toLocaleDateString(),
+          timestamp: getTimestamp(item),
           url: item.url || item.link || item.emailUrl
         }))
       }
@@ -100,7 +105,7 @@ export async function POST(request: NextRequest) {
           subject: item.subject || item.title || item.Subject || 'No Subject',
           sender: item.sender || item.from || item.From || item.fromEmail || 'Unknown Sender',
           summary: item.summary || item.content || item.body || item.Summary || item.emailSummary || 'No summary available',
-          timestamp: item.timestamp || item.date || item.time || item.receivedDate || new Date().toLocaleDateString(),
+          timestamp: getTimestamp(item),
           url: item.url || item.link || item.emailUrl
         }))
       }
@@ -117,7 +122,7 @@ export async function POST(request: NextRequest) {
           subject: item.subject || item.title || item.Subject || 'No Subject',
           sender: item.sender || item.from || item.From || item.fromEmail || 'Unknown Sender',
           summary: item.summary || item.content || item.body || item.Summary || item.emailSummary || 'No summary available',
-          timestamp: item.timestamp || item.date || item.time || item.receivedDate || new Date().toLocaleDateString(),
+          timestamp: getTimestamp(item),
           url: item.url || item.link || item.emailUrl
         }))
       }
@@ -134,7 +139,7 @@ export async function POST(request: NextRequest) {
           subject: item.subject || item.title || item.Subject || 'No Subject',
           sender: item.sender || item.from || item.From || item.fromEmail || 'Unknown Sender',
           summary: item.summary || item.content || item.body || item.Summary || item.emailSummary || 'No summary available',
-          timestamp: item.timestamp || item.date || item.time || item.receivedDate || new Date().toLocaleDateString(),
+          timestamp: getTimestamp(item),
           url: item.url || item.link || item.emailUrl
         }))
       }
@@ -151,7 +156,7 @@ export async function POST(request: NextRequest) {
           subject: item.subject || item.title || item.Subject || 'No Subject',
           sender: item.sender || item.from || item.From || item.fromEmail || 'Unknown Sender',
           summary: item.summary || item.content || item.body || item.Summary || item.emailSummary || 'No summary available',
-          timestamp: item.timestamp || item.date || item.time || item.receivedDate || new Date().toLocaleDateString(),
+          timestamp: getTimestamp(item),
           url: item.url || item.link || item.emailUrl
         }))
       }
@@ -168,7 +173,7 @@ export async function POST(request: NextRequest) {
           subject: item.subject || item.title || item.Subject || 'No Subject',
           sender: item.sender || item.from || item.From || item.fromEmail || 'Unknown Sender',
           summary: item.summary || item.content || item.body || item.Summary || item.emailSummary || 'No summary available',
-          timestamp: item.timestamp || item.date || item.time || item.receivedDate || new Date().toLocaleDateString(),
+          timestamp: getTimestamp(item),
           url: item.url || item.link || item.emailUrl
         }))
       }
@@ -185,7 +190,7 @@ export async function POST(request: NextRequest) {
           subject: item.subject || item.title || item.Subject || 'No Subject',
           sender: item.sender || item.from || item.From || item.fromEmail || 'Unknown Sender',
           summary: item.summary || item.content || item.body || item.Summary || item.emailSummary || 'No summary available',
-          timestamp: item.timestamp || item.date || item.time || item.receivedDate || new Date().toLocaleDateString(),
+          timestamp: getTimestamp(item),
           url: item.url || item.link || item.emailUrl
         }))
       }
@@ -198,7 +203,7 @@ export async function POST(request: NextRequest) {
           subject: data.subject || data.title || data.Subject || 'No Subject',
           sender: data.sender || data.from || data.From || data.fromEmail || 'Unknown Sender',
           summary: data.summary || data.content || data.body || data.Summary || data.emailSummary || 'No summary available',
-          timestamp: data.timestamp || data.date || data.time || data.receivedDate || new Date().toLocaleDateString(),
+          timestamp: getTimestamp(data),
           url: data.url || data.link || data.emailUrl
         }]
       }

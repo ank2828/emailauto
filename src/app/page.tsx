@@ -45,11 +45,27 @@ export default function EmailHub() {
       const data = await response.json()
       const summaries = data.summaries || []
       
-      // Sort emails by timestamp (most recent first)
+      // Sort emails by timestamp (most recent first) with improved handling
       const sortedSummaries = summaries.sort((a: EmailSummary, b: EmailSummary) => {
-        const dateA = new Date(a.timestamp)
-        const dateB = new Date(b.timestamp)
-        return dateB.getTime() - dateA.getTime()
+        try {
+          const dateA = new Date(a.timestamp)
+          const dateB = new Date(b.timestamp)
+          
+          // Check if dates are valid
+          if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
+            console.warn('Invalid timestamp found:', { a: a.timestamp, b: b.timestamp })
+            // If one date is invalid, treat it as older
+            if (isNaN(dateA.getTime())) return 1
+            if (isNaN(dateB.getTime())) return -1
+            return 0
+          }
+          
+          // Sort with most recent first (descending order)
+          return dateB.getTime() - dateA.getTime()
+        } catch (error) {
+          console.error('Error sorting emails by timestamp:', error)
+          return 0
+        }
       })
       
       setEmailSummaries(sortedSummaries)
